@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101318">
+<meta name="description" content="IRONLOG personal workout and strength tracker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>IRONLOG | Workout Tracker</title>
+<style>
+:root{color-scheme:dark;--bg:#101318;--panel:#191f27;--panel2:#202833;--line:#303b49;--text:#f2f5f8;--muted:#9ba8b7;--accent:#c4f04d;--red:#ff7272}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.app{max-width:1120px;margin:auto;padding:20px 18px 50px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:8px 0 22px}.brand{font-size:26px;font-weight:900;letter-spacing:2px}.brand span{color:var(--accent)}.sub{color:var(--muted);font-size:12px}
+nav{display:flex;gap:8px;overflow:auto;padding-bottom:12px;margin-bottom:14px}
+.tab,.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:10px 14px;font-weight:650;white-space:nowrap}
+.tab.active,.btn.primary{background:var(--accent);color:#11170b;border-color:var(--accent)}
+.btn.danger{color:var(--red)}.btn.small{padding:6px 9px;font-size:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+h1,h2,h3,p{margin-top:0}h1{font-size:25px;margin-bottom:4px}h2{font-size:17px;margin-bottom:12px}h3{font-size:14px}
+.muted{color:var(--muted)}.tiny{font-size:12px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.stat{background:var(--panel2);border-radius:13px;padding:14px}.stat strong{display:block;font-size:26px}.stat span{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}.field label{font-size:12px;color:var(--muted)}
+input,select{background:#11171e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:11px;width:100%;min-width:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.stack{display:flex;flex-direction:column;gap:9px}
+.exercise{border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.checkline{display:flex;align-items:center;gap:9px;font-weight:650}.checkline input{width:18px;height:18px;accent-color:var(--accent)}
+.exercise-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.exercise-fields label{font-size:11px;color:var(--muted)}
+.entry{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.entry:last-child{border:0}
+.entry strong{display:block}.entry small{color:var(--muted)}
+.bar{height:8px;background:#303b49;border-radius:99px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--accent)}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}.day{padding:10px 2px;background:var(--panel2);border-radius:8px;font-size:12px}.day.done{background:var(--accent);color:#11170b;font-weight:800}
+.hidden{display:none!important}.actions{display:flex;gap:8px;flex-wrap:wrap}.empty{color:var(--muted);padding:18px;text-align:center}
+footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
+@media(max-width:650px){.app{padding:14px 12px 35px}.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.brand{font-size:23px}.exercise-fields{gap:6px}.exercise-fields input{padding:9px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><div class="brand">IRON<span>LOG</span></div><div class="sub">YOUR TRAINING. YOUR NUMBERS. YOUR PROGRESS.</div></div><div class="sub" id="today"></div></header>
+<div class="stats">
+ <div class="stat"><strong id="monthDays">0</strong><span>GYM DAYS THIS MONTH</span></div>
+ <div class="stat"><strong id="sessionCount">0</strong><span>TOTAL SESSIONS</span></div>
+ <div class="stat"><strong id="exerciseCount">0</strong><span>EXERCISE LOGS</span></div>
+ <div class="stat"><strong id="prCount">0</strong><span>EXERCISE RECORDS</span></div>
+</div>
+<nav>
+ <button class="tab active" data-view="log">Log workout</button><button class="tab" data-view="library">Exercise library</button><button class="tab" data-view="calendar">Calendar</button><button class="tab" data-view="records">Strength records</button><button class="tab" data-view="history">History & backup</button>
+</nav>
+<section id="view-log">
+ <div class="panel">
+  <h1>Log your session</h1><p class="muted tiny">Select what you completed after your workout. Record the heaviest working set for each exercise.</p>
+  <div class="grid2">
+   <div class="field"><label>WORKOUT DATE</label><input type="date" id="workDate"></div>
+   <div class="field"><label>MUSCLE GROUP</label><select id="muscle"></select></div>
+  </div>
+  <h2>Exercises completed</h2><div id="exercisePicker"></div>
+  <button class="btn primary" id="saveWorkout">Save completed workout</button>
+  <span class="muted tiny" id="logMessage"></span>
+ </div>
+ <div class="panel"><h2>Latest entries</h2><div id="latest"></div></div>
+</section>
+<section id="view-library" class="hidden">
+ <div class="panel"><h1>Exercise library</h1><p class="muted tiny">Edit the exercises you want available for each muscle group.</p>
+ <div class="field"><label>MUSCLE GROUP</label><select id="libraryMuscle"></select></div><div id="libraryList"></div>
+ <div class="field"><label>NEW EXERCISE</label><input id="newExercise" placeholder="e.g. Incline cable fly"></div><button class="btn primary" id="addExercise">Add exercise</button>
+ </div>
+</section>
+<section id="view-calendar" class="hidden">
+ <div class="panel"><div class="row"><button class="btn" id="prevMonth">‹</button><h1 id="monthLabel"></h1><button class="btn" id="nextMonth">›</button></div>
+ <div class="calendar muted tiny" style="margin:14px 0 8px"><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div><div>SUN</div></div><div class="calendar" id="calendarGrid"></div>
+ <p class="muted tiny" style="margin-top:14px">Highlighted dates are days with at least one saved workout.</p><h2 id="monthTotal"></h2></div>
+</section>
+<section id="view-records" class="hidden">
+ <div class="panel"><h1>Strength records</h1><p class="muted tiny">Your heaviest logged working set for each exercise, including the reps completed.</p><div id="recordList"></div></div>
+</section>
+<section id="view-history" class="hidden">
+ <div class="panel"><h1>Workout history</h1><div id="allHistory"></div></div>
+ <div class="panel"><h2>Backup & portability</h2><p class="muted tiny">Your data stays in this browser on this device. Export a JSON backup regularly. To move data to another device, export here and import it there.</p>
+ <div class="actions"><button class="btn primary" id="exportJson">Export full backup (JSON)</button><button class="btn" id="exportCsv">Export workout log (CSV)</button><button class="btn" id="importBtn">Import backup</button><input type="file" id="importFile" accept=".json,application/json" hidden></div><p id="backupMessage" class="muted tiny"></p>
+ <hr style="border-color:var(--line);margin:18px 0"><button class="btn danger" id="clearData">Delete all local data</button></div>
+</section>
+<footer>IRONLOG · Local-first workout tracker · No account or cloud storage</footer>
+</div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id), qs=sel=>document.querySelector(sel), KEY='ironlog-local-v1';
+const muscles=['Chest','Back','Shoulders','Biceps','Triceps','Legs','Core'];
+const starter={Chest:['Incline Bench Press','Flat Bench Press','Incline Dumbbell Fly','Decline Press','Cable Crossover'],Back:['Lat Pulldown','Seated Cable Row','Barbell Row','One Arm Dumbbell Row','Pull Ups'],Shoulders:['Lateral Raise','Front Raise','Cable Lateral Raise','Rear Delt Face Pull','Shrugs'],Biceps:['Barbell Curl','Dumbbell Curl','Hammer Curl','Preacher Curl','Cable Curl'],Triceps:['Rope Pushdown','Overhead Extension','Skull Crushers','Close Grip Bench Press'],Legs:['Squat','Leg Press','Leg Extension','Leg Curl','Calf Raise','Romanian Deadlift'],Core:['Cable Crunch','Hanging Leg Raise','Plank','Russian Twist','Reverse Crunch']};
+let db={library:starter,logs:[]}, month=new Date();
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&saved.library&&Array.isArray(saved.logs))db=saved}catch(e){}
+muscles.forEach(m=>{if(!Array.isArray(db.library[m]))db.library[m]=starter[m]||[]});
+const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){$('backupMessage').textContent='Browser storage is full or unavailable. Export a backup now.'}}
+function dates(){return [...new Set(db.logs.map(x=>x.date))]}
+function fillSelect(id){$(id).innerHTML=muscles.map(m=>`<option>${m}</option>`).join('')}
+fillSelect('muscle');fillSelect('libraryMuscle');$('workDate').value=today();$('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+function picker(){let m=$('muscle').value;$('exercisePicker').innerHTML=(db.library[m]||[]).map((name,i)=>`<div class="exercise"><label class="checkline"><input type="checkbox" data-ex="${i}"> ${esc(name)}</label><div class="exercise-fields hidden" data-fields="${i}"><div><label>WORKING SETS</label><input type="number" min="1" step="1" value="3" data-sets></div><div><label>MAX REPS</label><input type="number" min="1" step="1" value="10" data-reps></div><div><label>MAX WEIGHT (KG)</label><input type="number" min="0" step=".5" placeholder="kg" data-weight></div></div></div>`).join('')||'<div class="empty">No exercises in this group. Add them in Exercise library.</div>';
+$('exercisePicker').querySelectorAll('[data-ex]').forEach(c=>c.onchange=()=>{qs(`[data-fields="${c.dataset.ex}"]`).classList.toggle('hidden',!c.checked)})}
+function renderLibrary(){let m=$('libraryMuscle').value;$('libraryList').innerHTML=(db.library[m]||[]).map((n,i)=>`<div class="entry"><strong>${esc(n)}</strong><button class="btn small" data-remove="${i}">Remove</button></div>`).join('')||'<div class="empty">No exercises yet.</div>'}
+function bests(){let b={};db.logs.forEach(x=>{if(!b[x.exercise]||x.weight>b[x.exercise].weight)b[x.exercise]=x});return b}
+function renderRecords(){let b=Object.entries(bests()).sort((a,b)=>a[0].localeCompare(b[0]));$('recordList').innerHTML=b.length?b.map(([n,x])=>`<div class="entry"><div><strong>${esc(n)}</strong><small>${esc(x.muscle)} · ${esc(x.date)}</small></div><div style="text-align:right"><strong>${x.weight} kg × ${x.reps}</strong><small>${x.sets} working sets</small></div></div>`).join(''):'<div class="empty">No strength records yet.</div>'}
+function entryMarkup(x){return `<div class="entry"><div><strong>${esc(x.exercise)}</strong><small>${esc(x.date)} · ${esc(x.muscle)}</small><small>${x.sets} sets · Best set ${x.weight} kg × ${x.reps}</small></div><button class="btn small danger" data-delete="${esc(x.id)}">Delete</button></div>`}
+function bindDelete(container){$(container).querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(confirm('Delete this workout entry?')){db.logs=db.logs.filter(x=>x.id!==b.dataset.delete);persist();render()}})}
+function renderCalendar(){let y=month.getFullYear(),m=month.getMonth(),start=(new Date(y,m,1).getDay()+6)%7,n=new Date(y,m+1,0).getDate(),worked=dates();$('monthLabel').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});let out='';for(let i=0;i<start;i++)out+='<div></div>';for(let d=1;d<=n;d++){let date=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;out+=`<div class="day ${worked.includes(date)?'done':''}">${d}</div>`}$('calendarGrid').innerHTML=out;let count=worked.filter(d=>d.startsWith(`${y}-${String(m+1).padStart(2,'0')}-`)).length;$('monthTotal').textContent=`${count} workout days this month`}
+function render(){let d=dates(),now=today().slice(0,7),b=bests();$('monthDays').textContent=d.filter(x=>x.startsWith(now)).length;$('sessionCount').textContent=d.length;$('exerciseCount').textContent=db.logs.length;$('prCount').textContent=Object.keys(b).length;
+let latest=db.logs.slice().reverse().slice(0,8);$('latest').innerHTML=latest.length?latest.map(entryMarkup).join(''):'<div class="empty">Your completed workouts will appear here.</div>';bindDelete('latest');
+$('allHistory').innerHTML=db.logs.length?db.logs.slice().reverse().map(entryMarkup).join(''):'<div class="empty">No history recorded.</div>';bindDelete('allHistory');renderLibrary();renderRecords();renderCalendar()}
+function saveWorkout(){let date=$('workDate').value,m=$('muscle').value,items=[];document.querySelectorAll('#exercisePicker [data-ex]:checked').forEach(c=>{let i=Number(c.dataset.ex),f=qs(`[data-fields="${i}"]`),sets=Number(f.querySelector('[data-sets]').value),reps=Number(f.querySelector('[data-reps]').value),weight=Number(f.querySelector('[data-weight]').value);if(!Number.isInteger(sets)||sets<1||!Number.isInteger(reps)||reps<1||!Number.isFinite(weight)||weight<0){items.push(null);return}items.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),date,muscle:m,exercise:db.library[m][i],sets,reps,weight})});
+if(!date||!items.length){$('logMessage').textContent='Select at least one completed exercise.';return}if(items.includes(null)){$('logMessage').textContent='Please enter valid sets, reps and weight for every selected exercise.';return}db.logs.push(...items);persist();render();$('logMessage').textContent=`Saved ${items.length} exercise record(s).`}
+$('muscle').onchange=picker;$('libraryMuscle').onchange=renderLibrary;$('saveWorkout').onclick=saveWorkout;picker();
+$('addExercise').onclick=()=>{let m=$('libraryMuscle').value,n=$('newExercise').value.trim();if(!n)return;if(db.library[m].some(x=>x.toLowerCase()===n.toLowerCase())){alert('That exercise already exists.');return}db.library[m].push(n);$('newExercise').value='';persist();render()};
+$('libraryList').onclick=e=>{let b=e.target.closest('[data-remove]');if(!b)return;let m=$('libraryMuscle').value,n=db.library[m][Number(b.dataset.remove)];if(!confirm(`Remove ${n} from the library? Past logs will remain.`))return;db.library[m].splice(Number(b.dataset.remove),1);persist();render()};
+$('prevMonth').onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendar()};$('nextMonth').onclick=()=>{month.setMonth(month.getMonth()+1);renderCalendar()};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));['log','library','calendar','records','history'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==t.dataset.view));if(t.dataset.view==='library')renderLibrary()});
+function download(name,data,type){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([data],{type}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+$('exportJson').onclick=()=>{download('ironlog-backup.json',JSON.stringify(db,null,2),'application/json');$('backupMessage').textContent='Full backup exported.'};
+$('exportCsv').onclick=()=>{let cols=['date','muscle','exercise','sets','reps','weight'];let csv=[cols.join(','),...db.logs.map(x=>cols.map(k=>'"'+String(x[k]).replace(/"/g,'""')+'"').join(','))].join('\n');download('ironlog-workouts.csv',csv,'text/csv')};
+$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{let x=JSON.parse(await e.target.files[0].text());if(!x.library||!Array.isArray(x.logs)||!x.logs.every(a=>a.date&&a.exercise&&Number.isFinite(a.weight)&&Number.isFinite(a.reps)&&Number.isFinite(a.sets)))throw Error();db=x;muscles.forEach(m=>{if(!Array.isArray(db.library[m]))db.library[m]=[]});persist();render();$('backupMessage').textContent='Backup restored successfully.'}catch(err){$('backupMessage').textContent='Could not import this file. Check that it is an IRONLOG JSON backup.'}e.target.value=''};
+$('clearData').onclick=()=>{if(confirm('Permanently delete all IRONLOG data saved in this browser? Export a backup first if needed.')){db={library:JSON.parse(JSON.stringify(starter)),logs:[]};persist();render();$('backupMessage').textContent='Local data cleared.'}};
+render();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script>
+</body></html>
